@@ -11,6 +11,34 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
 	<!-- Latest compiled and minified JavaScript -->
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+	<script>
+		 $('#message').submit(function(e){
+	    e.preventDefault()
+	    $.ajax({
+	      url: '/posts/',
+	      method: 'post',
+	      data: $(this).serialize(),
+	      success: function(serverResponse){
+	        console.log("Received this from server: ", serverResponse)
+	        console.log("I should probably put that in the DOM...")
+	      }
+	    })
+	  })
+		 $('#comment').submit(function(e){
+	    e.preventDefault()
+	    $.ajax({
+	      url: '/posts/',
+	      method: 'post',
+	      data: $(this).serialize(),
+	      success: function(serverResponse){
+	        console.log("Received this from server: ", serverResponse)
+	        console.log("I should probably put that in the DOM...")
+	      }
+	    })
+	  })
+  	</script>
+
 </head>
 <body>
 	<nav class="navbar navbar-inverse">
@@ -60,7 +88,7 @@
 	 </div>
 	 <div class='row'>
 	  	<div class='col-md-6'>
-	  	<form action="{% url 'dashboard:new_message' user.id %}" method="post">
+	  	<form action="{% url 'dashboard:new_message' user.id %}" method="post" id='message'>
 	  		{% csrf_token %}
 	  		<textarea name='message' class='form-control' rows='3'></textarea>
 	  		<br>
@@ -88,7 +116,7 @@
 	{% endfor %}
 	<div class='row'>
 	  	<div class='col-md-5 col-md-offset-1'>
-			<form action="{% url 'dashboard:new_comment' user.id message.id %}" method="post">
+			<form action="{% url 'dashboard:new_comment' user.id message.id %}" method="post" id='comment'>
 				{% csrf_token %}
 			  	<textarea name='comment' class='form-control' rows='1'></textarea>
 			  	<br>
