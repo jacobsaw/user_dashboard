@@ -15,10 +15,10 @@ nav{
 }
 
 form.form-inline {
-	padding: 10px;
+	padding: 8px 10px;
 }
 
-form.form-inline .form-group {
+div.form-group {
 	margin: 0px 10px;
 }
 
@@ -42,7 +42,6 @@ form.form-inline label {
 
 .glyphicon-cloud {
 	color: #294FF9;
-
 }
 
 .glyphicon-leaf {
@@ -57,9 +56,10 @@ form.form-inline label {
 	color: #04C7C7;
 }
 
-.table_space label {
+table label {
 	padding: 10px;
 }
+
 .btn {
 	margin-left: 10px;
 }
