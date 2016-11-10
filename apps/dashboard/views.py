@@ -6,49 +6,52 @@ from .forms import RegisterForm, EditForm, EditAdminForm, EditPasswordForm, Edit
 
 # user/admin home page
 def index(request):
+    if not 'user_id' in request.session:
+        return redirect(reverse('login:index'))
     current_user = User.objects.get(id=request.session['user_id'])
     user = User.objects.all()
-    context = {
-        'users' :user,
-                }
-
-    if current_user.user_level == 'user':
-        return render(request, 'dashboard/index.html', context)
-    else: #only two choices for user level - admin and user
+    context = { 'users': user }
+    if current_user.user_level == 'admin':
         return render(request, 'dashboard/index_admin.html', context)
+    else: #only two choices for user level - admin and user
+        return render(request, 'dashboard/index.html', context)
 
 # users page to edit own info
 def edit(request, user_id):
+    if not 'user_id' in request.session:
+        return redirect(reverse('login:index'))
     #get the user object for whomever is in session
     user = User.objects.get(id=request.session['user_id'])
-
+    print user_id, type(user_id)
+    print user.id, type(user.id)
     #if the user_level is 'user', create the appropiate forms and strings
-    if user.user_level == 'user':
-        editForm = EditForm()
-        editDescriptionForm = EditDescriptionForm()
+    if user.id == int(user_id) and user.user_level == 'user':
+        editForm = EditForm(user=user)
+        editDescriptionForm = EditDescriptionForm(user=user)
         editStr = 'profile'
         title = 'Profile'
-        #show div id=EditDescriptionForm
+        hidden = ''
+    elif user.id != int(user_id) and user.user_level == 'user':
+        return redirect(reverse('dashboard:edit', args=[user.id]))
     #if the user_level is 'admin' and he is trying to edit himself
     #then create the appropiate forms and strings
-    elif user.user_level == 'admin' and user.id == user_id:
-        editForm = EditAdminForm()
-        editDescriptionForm = EditDescriptionForm()
+    elif user.user_level == 'admin' and user.id == int(user_id):
+        editForm = EditAdminForm(user=user)
+        editDescriptionForm = EditDescriptionForm(user=user)
         editStr = 'profile'
         title = 'Profile'
-        #hide div id= EditdescriptionForm
+        hidden = ''
     #if the user_level is admin and he is trying to edit someone else
     #then create the appropiate forms and strings
     else:
-        editForm = EditAdminForm()
+        user = User.objects.get(id=user_id)
+        editForm = EditAdminForm(user=user)
         editDescriptionForm = ''
         editStr = "user #" + str(user_id)
         title = 'User'
-        #hide div id= EditdescriptionForm
+        hidden = 'hidden'
     #create editPasswordForm
-    #NOTE: it is the same for admin and users
     editPasswordForm = EditPasswordForm()
-
     context = {
         'editForm': editForm,
         'editPasswordForm': editPasswordForm,
@@ -56,32 +59,24 @@ def edit(request, user_id):
         'editStr': editStr,
         'title':title,
         'user_id': user_id,
-        #show/hide div id=EditDescriptionForm
+        'hidden': hidden,
     }
     return render(request, 'dashboard/edit.html', context)
 
 # POST request for user editing info
 def edit_info(request, user_id):  #POST REQUEST
+    editStatus = User.userManager.editInfo(user_id, **request.POST)
     return redirect(reverse('dashboard:index'))
+
 # POST request for user editing password
 def edit_pw(request, user_id):  #POST REQUEST
+    editStatus = User.userManager.editPassword(user_id, **request.POST)
     return redirect(reverse('dashboard:index'))
 
 # POST request for user editing description
 def edit_desc(request, user_id):  #POST REQUEST
+    editStatus = User.userManager.editDescription(user_id, request.POST['description'])
     return redirect(reverse('dashboard:index'))
-
-# admin page to edit other users info
-def edit_admin(request, user_id):
-    pass
-
-# POST request for admin editing user info
-def edit_info_admin(request, user_id):  #POST REQUEST
-    pass
-
-# POST request for admin editing user password
-def edit_pw_admin(request, user_id):  #POST REQUEST
-    pass
 
 # POST link for delete user link (admin only)
 def remove_admin(request, user_id):  #POST REQUEST
@@ -90,6 +85,15 @@ def remove_admin(request, user_id):  #POST REQUEST
 
 # admin page to create new user
 def new_admin(request):
+    #if no user in session then redirect to login:index
+    if not 'user_id' in request.session:
+        return redirect(reverse('login:index'))
+    #query the current user and check their user level
+    #if not admin, redirect to dashboard:index
+    current_user = User.objects.get(id=request.session['user_id'])
+    if current_user.user_level == 'user':
+        return render(request, 'dashboard/index.html', context)
+
     context = {'regform': RegisterForm }
     return render(request, 'dashboard/new_admin.html', context)
 
@@ -101,10 +105,14 @@ def create_admin(request):
     else:
         for message in create_status[1]:
             messages.warning(request, message)
-            return redirect(reverse('login:new_admin'))
+        return redirect(reverse('login:new_admin'))
 
 # show user wall
 def show(request, user_id):
+    #if no user in session then redirect to login:index
+    if not 'user_id' in request.session:
+        return redirect(reverse('login:index'))
+
     messages = Message.objects.filter(walluser=user_id).order_by('-created_at')
     comments = Comment.objects.all()
     user = User.objects.get(id=user_id)
